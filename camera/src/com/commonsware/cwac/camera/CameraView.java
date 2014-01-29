@@ -31,8 +31,10 @@ import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
-import java.io.IOException;
+
 import com.commonsware.cwac.camera.CameraHost.FailureReason;
+
+import java.io.IOException;
 
 public class CameraView extends ViewGroup implements
     Camera.PictureCallback, AutoFocusCallback {
@@ -88,6 +90,9 @@ public class CameraView extends ViewGroup implements
 
   public void setHost(CameraHost host) {
     this.host=host;
+    if (camera != null) {
+        this.host.onCheckFlashSupport(CameraUtils.deviceSupportsFlash(camera.getParameters()));
+    }
 
     if (host.getDeviceProfile().useTextureView()) {
       previewStrategy=new TexturePreviewStrategy(this);
@@ -101,32 +106,7 @@ public class CameraView extends ViewGroup implements
   public void onResume() {
     addView(previewStrategy.getWidget());
 
-    if (camera == null) {
-      cameraId=getHost().getCameraId();
-
-      if (cameraId >= 0) {
-        try {
-          camera=Camera.open(cameraId);
-
-          if (getActivity().getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
-            onOrientationChange.enable();
-          }
-
-          setCameraDisplayOrientation(cameraId, camera);
-
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH
-              && getHost() instanceof Camera.FaceDetectionListener) {
-            camera.setFaceDetectionListener((Camera.FaceDetectionListener)getHost());
-          }
-        }
-        catch (Exception e) {
-          getHost().onCameraFail(FailureReason.UNKNOWN);
-        }
-      }
-      else {
-        getHost().onCameraFail(FailureReason.NO_CAMERAS_REPORTED);
-      }
-    }
+    initCamera();
   }
 
   public void onPause() {
@@ -268,6 +248,7 @@ public class CameraView extends ViewGroup implements
 
   @Override
   public void onPictureTaken(byte[] data, Camera camera) {
+    getHost().pictureTaken();
     camera.setParameters(previewParams);
 
     if (data != null) {
@@ -281,10 +262,59 @@ public class CameraView extends ViewGroup implements
     }
   }
 
+  private void initCamera() {
+      if (camera == null) {
+          cameraId=getHost().getCameraId();
+
+          if (cameraId >= 0) {
+              try {
+                  camera=Camera.open(cameraId);
+
+                  if (getActivity().getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
+                      onOrientationChange.enable();
+                  }
+
+                  setCameraDisplayOrientation(cameraId, camera);
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH
+                          && getHost() instanceof Camera.FaceDetectionListener) {
+                      camera.setFaceDetectionListener((Camera.FaceDetectionListener)getHost());
+                  }
+                  getHost().onCheckFlashSupport(CameraUtils.deviceSupportsFlash(camera.getParameters()));
+              }
+              catch (Exception e) {
+                  getHost().onCameraFail(FailureReason.UNKNOWN);
+              }
+          }
+          else {
+              getHost().onCameraFail(FailureReason.NO_CAMERAS_REPORTED);
+          }
+      }
+  }
+
+  public void reinitializePreview() {
+    // Release the camera and stop the preview
+    previewDestroyed();
+    // Get a new reference to the camera
+    initCamera();
+    // Rebind the camera to the rendering surface
+    previewCreated();
+    // Reset the camera's parameters and start the preview
+    previewReset(this.getWidth(), this.getHeight());
+  }
+
   public void restartPreview() {
     if (!inPreview) {
       startPreview();
     }
+  }
+
+  public void setFlashMode(String flashMode) {
+      if (camera != null) {
+          Camera.Parameters pictureParams=camera.getParameters();
+          pictureParams.setFlashMode(flashMode);
+          camera.setParameters(getHost().adjustPictureParameters(pictureParams));
+      }
   }
 
   public void takePicture(boolean needBitmap, boolean needByteArray) {

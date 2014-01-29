@@ -15,6 +15,7 @@
 package com.commonsware.cwac.camera;
 
 import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import java.util.Collections;
 import java.util.Comparator;
@@ -176,4 +177,18 @@ public class CameraUtils {
       return(0);
     }
   }
+
+    /**
+     * Checks if the device supports flash. This method contains an addition edge-case check for devices
+     * like the Nexus 7 that give a false positive.
+     * @param params The Camera.Parameters for the device's camera
+     * @return true if flash is supported, false if not
+     */
+    public static boolean deviceSupportsFlash(Parameters params) {
+        List<String> flashModes = params.getSupportedFlashModes();
+        if (flashModes != null && !(flashModes.size() == 1 && "off".equals(flashModes.get(0).toLowerCase()))) {
+            return true;
+        }
+        return false;
+    }
 }
