@@ -237,6 +237,12 @@ public interface CameraHost extends Camera.AutoFocusCallback {
   boolean rotateBasedOnExif();
 
   /**
+   * Called when a picture has been taken, but before the picture is saved.
+   * This will be called on the main thread.
+   */
+  void pictureTaken();
+
+  /**
    * Called when a picture has been taken. This will be
    * called on a background thread.
    * 
@@ -278,6 +284,13 @@ public interface CameraHost extends Camera.AutoFocusCallback {
    *          a FailureReason indicating what went wrong
    */
   void onCameraFail(FailureReason reason);
+
+  /**
+   * Called after the camera has been initialized to indicate whether the
+   * device supports flash.
+   * @param supportsFlash whether the device supports camera flash
+   */
+  void onCheckFlashSupport(boolean supportsFlash);
   
   boolean useFullBleedPreview();
 }

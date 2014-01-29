@@ -117,6 +117,15 @@ public class CameraFragment extends Fragment {
   }
 
   /**
+   * Sets the cameraView's camera's flash mode. This, unlike many other
+   * camera settings, can be modified pretty much any time.
+   * @param flashMode The new flash mode for the camera
+   */
+  public void setFlashMode(String flashMode) {
+      cameraView.setFlashMode(flashMode);
+  }
+
+  /**
    * Call this to take a picture and get access to a byte
    * array of data as a result (e.g., to save or stream).
    */
@@ -211,6 +220,14 @@ public class CameraFragment extends Fragment {
    */
   public boolean isAutoFocusAvailable() {
     return(cameraView.isAutoFocusAvailable());
+  }
+
+  /**
+   * Stops the camera preview (if needed) and re-initializes the
+   * camera preview with any new parameters from adjustPreviewParameters().
+   */
+  public void reinitializePreview() {
+    cameraView.reinitializePreview();
   }
 
   /**
