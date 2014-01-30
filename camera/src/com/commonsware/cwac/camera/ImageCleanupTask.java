@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.ExifInterface;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 import java.io.ByteArrayOutputStream;
@@ -12,7 +13,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class ImageCleanupTask extends Thread {
+public class ImageCleanupTask extends AsyncTask<Void, Void, Void> {
   private byte[] data;
   private Bitmap workingCopy=null;
   private int cameraId;
@@ -35,7 +36,7 @@ public class ImageCleanupTask extends Thread {
   }
 
   @Override
-  public void run() {
+  public Void doInBackground(Void... params) {
     Camera.CameraInfo info=new Camera.CameraInfo();
 
     Camera.getCameraInfo(cameraId, info);
@@ -67,9 +68,17 @@ public class ImageCleanupTask extends Thread {
     if (needByteArray) {
       host.saveImage(data);
     }
+
+    return null;
   }
 
-  void applyMirror() {
+    @Override
+    protected void onPostExecute(Void aVoid) {
+        super.onPostExecute(aVoid);
+        host.pictureTaken();
+    }
+
+    void applyMirror() {
     synchronizeModels(true, false);
 
     // from http://stackoverflow.com/a/8347956/115145

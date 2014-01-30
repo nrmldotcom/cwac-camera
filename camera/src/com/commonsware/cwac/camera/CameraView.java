@@ -248,13 +248,12 @@ public class CameraView extends ViewGroup implements
 
   @Override
   public void onPictureTaken(byte[] data, Camera camera) {
-    getHost().pictureTaken();
     camera.setParameters(previewParams);
 
     if (data != null) {
       new ImageCleanupTask(data, cameraId, getHost(),
                            getContext().getCacheDir(), needBitmap,
-                           needByteArray, displayOrientation).start();
+                           needByteArray, displayOrientation).execute();
     }
 
     if (!getHost().useSingleShotMode()) {
